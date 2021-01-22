@@ -8,12 +8,13 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 
+
 # Create your models here.
 
 class UserProfile(User):
     # Add city field to the User model
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE,related_name='+')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='+')
     city = models.CharField(max_length=50)
 
 
@@ -30,6 +31,7 @@ def save_user_profile(sender, instance, **kwargs):
 
 '''
 
+
 @receiver(post_save, sender=User, dispatch_uid='save_new_user_profile')
 def save_profile(sender, instance, created, **kwargs):
     user = instance
@@ -37,42 +39,66 @@ def save_profile(sender, instance, created, **kwargs):
         profile = UserProfile(user=user)
         profile.save()
 
+
 class City(models.Model):
     name = models.CharField(
         max_length=255,
         validators=[MinLengthValidator(2, 'City name should have at least 2 characters')]
     )
 
+    def __str__(self):
+        return self.name
+
+
 class Category(models.Model):
-    title = models.CharField(
+    category = models.CharField(
         max_length=255,
         validators=[MinLengthValidator(2, 'Category title should have at least 2 characters')]
     )
-    events = models.ManyToManyField('Event', through='Events')
+    events = models.ManyToManyField('Event', through='EventDetails')
+
+    def __str__(self):
+        return self.category
+
 
 class Sponsor(models.Model):
     name = models.CharField(
         max_length=255,
         validators=[MinLengthValidator(2, 'Name should have at least 2 characters')]
     )
-    events = models.ManyToManyField('Events', through='Events')
+    events = models.ManyToManyField('Event', through='EventDetails')
+
+    def __str__(self):
+        return self.name
+
 
 class Organiser(models.Model):
     name = models.CharField(
         max_length=255,
         validators=[MinLengthValidator(2, 'Category title should have at least 2 characters')]
     )
-    events = models.ManyToManyField('Events', through='Events')
+    events = models.ManyToManyField('Event', through='EventDetails')
 
-class Events(models.Model):
+    def __str__(self):
+        return self.name
+
+
+class Event(models.Model):
     title = models.CharField(
         max_length=255,
         validators=[MinLengthValidator(2, 'Title should have at least 2 Characters')]
     )
+
+    def __str__(self):
+        return self.title
+
+
+class EventDetails(models.Model):
+    title = models.ForeignKey(Event, on_delete=models.CASCADE)
     description = models.TextField()
     event_date = models.DateTimeField()
 
     city = models.ForeignKey(City, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
-    organiser = models.ForeignKey(Organiser, on_delete=models.CASCADE)
+    categories = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    organisers = models.ForeignKey(Organiser, on_delete=models.CASCADE)
     sponsors = models.ForeignKey(Sponsor, on_delete=models.SET_NULL, null=True)
